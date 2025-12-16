@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>番茄时钟</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header>
+            <div class="header-left">
+                <span class="logo-icon">⏱️</span>
+                <h1>番茄时钟</h1>
+            </div>
+            <button id="theme-toggle" aria-label="切换主题">☼</button>
+        </header>
+
+        <!-- MAIN SECTION: MODE SELECTOR -->
+        <main id="main-view">
+            <div class="mode-grid">
+                <button class="mode-card deep-work" onclick="app.selectMode('deep')">
+                    <span class="icon">🧠</span>
+                    <span class="label">深度工作</span>
+                    <span class="time">25 分钟</span>
+                </button>
+                <button class="mode-card break" onclick="app.selectMode('break')">
+                    <span class="icon">☕</span>
+                    <span class="label">娱乐休息</span>
+                    <span class="time">5 分钟</span>
+                </button>
+                <button class="mode-card chore" onclick="app.selectMode('chore')">
+                    <span class="icon">✓</span>
+                    <span class="label">琐事时间</span>
+                    <span class="time">2 分钟</span>
+                </button>
+                <button class="mode-card fitness" onclick="app.selectMode('fitness')">
+                    <span class="icon">💪</span>
+                    <span class="label">健身时间</span>
+                    <span class="time">40 分钟</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- TIMER OVERLAY -->
+        <div id="timer-view" class="hidden">
+            <div class="timer-container">
+                <div class="progress-ring-wrapper">
+                    <svg class="progress-ring" width="280" height="280">
+                        <circle class="progress-ring__circle-bg" stroke="currentColor" stroke-width="8" fill="transparent" r="120" cx="140" cy="140"/>
+                        <circle class="progress-ring__circle" stroke="currentColor" stroke-width="8" fill="transparent" r="120" cx="140" cy="140"/>
+                    </svg>
+                    <div class="timer-display">
+                        <div id="timer-mode-label">Mode</div>
+                        <div id="time-left">00:00</div>
+                    </div>
+                </div>
+
+                <div class="timer-controls">
+                    <button id="btn-toggle" class="btn-primary">开始</button>
+                    <button id="btn-reset" class="btn-secondary">放弃</button>
+                </div>
+                
+                <div id="suggestion-area" class="hidden">
+                    <p>专注完成！建议下一个：</p>
+                    <button id="btn-next-mode" class="btn-suggestion">进入休息</button>
+                    <button id="btn-back-home" class="btn-text">返回主页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATISTICS SECTION -->
+        <section id="stats-section">
+            
+            <div class="stats-group">
+                <div class="section-title">今日统计</div>
+                <!-- 4 Column Summary Grid -->
+                <div id="stats-summary-grid" class="stats-summary-card">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <div class="stats-group">
+                <div class="section-title">今日记录</div>
+                <!-- Detailed Progress Card -->
+                <div class="stats-detail-card">
+                    <div class="detail-header">
+                        <span>每日时间分配</span>
+                        <span id="total-tracked-text">0 / 840 分钟</span>
+                    </div>
+                    
+                    <div id="daily-progress-list">
+                        <!-- Injected by JS -->
+                    </div>
+
+                    <div class="progress-scale">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session List / Empty State -->
+            <div class="stats-group">
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-icon">📅</div>
+                    <p>今天还没有完成任何时间块</p>
+                    <span class="sub-text">选择一个模式开始专注吧</span>
+                </div>
+
+                <div id="session-timeline" class="session-list hidden">
+                    <!-- Injected items -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

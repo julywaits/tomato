@@ -1,0 +1,389 @@
+:root {
+    /* Colors based on Screenshot */
+    --bg-color: #000000;
+    --card-bg: #1c1c1e;
+    --text-main: #ffffff;
+    --text-secondary: #a1a1aa;
+    --border-color: #27272a;
+
+    /* Mode Colors */
+    --color-deep: #10b981;    /* Green */
+    --color-break: #ef4444;   /* Red/Orange */
+    --color-chore: #6366f1;   /* Indigo/Blue */
+    --color-fitness: #f59e0b; /* Yellow/Gold */
+
+    /* Defaults */
+    --theme-color: var(--color-deep);
+    --radius: 16px;
+}
+
+/* Light Mode Override (if user toggles) */
+body.light-mode {
+    --bg-color: #f3f4f6;
+    --card-bg: #ffffff;
+    --text-main: #1f2937;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    transition: background-color 0.3s;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+.app-container {
+    max-width: 480px; /* Mobile width */
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+    color: var(--color-deep);
+}
+
+header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+#theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+}
+
+/* Mode Grid */
+.mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.mode-card {
+    background: var(--card-bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s;
+}
+
+.mode-card:active {
+    transform: scale(0.98);
+}
+
+/* Colored Left Border */
+.mode-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background-color: currentColor;
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+}
+
+.mode-card .icon { font-size: 2rem; margin-bottom: 4px; }
+.mode-card .label { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+.mode-card .time { font-size: 0.85rem; color: var(--text-secondary); }
+
+.mode-card.deep-work { color: var(--color-deep); }
+.mode-card.break { color: var(--color-break); }
+.mode-card.chore { color: var(--color-chore); }
+.mode-card.fitness { color: var(--color-fitness); }
+
+/* Stats Sections */
+.stats-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
+/* Summary Grid */
+.stats-summary-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.summary-icon { font-size: 1.2rem; }
+.summary-count { font-size: 1.4rem; font-weight: 700; }
+.summary-label { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* Daily Record Card */
+.stats-detail-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.progress-row {
+    margin-bottom: 16px;
+}
+
+.row-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.row-label { font-weight: 500; }
+.row-stats { color: var(--text-secondary); font-size: 0.8rem; }
+
+.progress-track {
+    height: 6px;
+    background-color: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+body.light-mode .progress-track { background-color: #e5e7eb; }
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #555;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #333;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+
+.sub-text {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* Session List (Timeline) */
+.session-list {
+    margin-top: 10px;
+}
+
+.session-card {
+    background: var(--card-bg);
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.session-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.session-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.session-note {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 6px;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+/* Timer View */
+#timer-view {
+    position: fixed;
+    inset: 0;
+    background-color: var(--bg-color);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+}
+
+.timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.progress-ring-wrapper {
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.progress-ring__circle-bg { opacity: 0.2; }
+.progress-ring__circle {
+    transition: stroke-dashoffset 1s linear;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    stroke-linecap: round;
+}
+
+.timer-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#timer-mode-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+#time-left {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 16px;
+}
+
+button.btn-primary {
+    background-color: var(--theme-color);
+    color: #fff;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+button.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-secondary);
+    padding: 14px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+}
+
+.btn-suggestion {
+    background: var(--card-bg);
+    border: 1px solid var(--theme-color);
+    color: var(--theme-color);
+    padding: 10px 24px;
+    border-radius: 20px;
+    margin-top: 10px;
+}
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    text-decoration: underline;
+}
+
+/* Utilities */
+.hidden { display: none !important; }
+
+/* Colors for injected content */
+.text-deep { color: var(--color-deep); }
+.text-break { color: var(--color-break); }
+.text-chore { color: var(--color-chore); }
+.text-fitness { color: var(--color-fitness); }
+
+.bg-deep { background-color: var(--color-deep); }
+.bg-break { background-color: var(--color-break); }
+.bg-chore { background-color: var(--color-chore); }
+.bg-fitness { background-color: var(--color-fitness); }
