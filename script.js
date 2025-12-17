@@ -1,5 +1,7 @@
 'use strict';
 
+const { createClient } = supabase;
+
 const supabase = createClient(
   'https://rjpebjpgfuabljxskemm.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo'
