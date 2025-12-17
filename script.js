@@ -1,8 +1,11 @@
 'use strict';
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
 const supabaseUrl = 'https://rjpebjpgfuabljxskemm.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo';
-const supabase = Supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const MODES = {
     deep: { id: 'deep', label: '深度工作', mins: 25, color: 'var(--color-deep)', class: 'bg-deep' },
