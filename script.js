@@ -1,8 +1,10 @@
 'use strict';
 
+// 从 CDN 加载的全局 supabase 对象中解构 createClient
 const { createClient } = supabase;
 
-const supabase = createClient(
+// 创建 Supabase 客户端实例
+const supabaseClient = createClient(
   'https://rjpebjpgfuabljxskemm.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo'
 );
@@ -77,7 +79,7 @@ function loadLocalData() {
 
 async function syncFromSupabase() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('sessions')
             .select('*')
             .order('start_time', { ascending: false });
@@ -92,7 +94,7 @@ async function syncFromSupabase() {
                 note: r.note || ''
             }));
             localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
-            renderStats();  // 同步后立即刷新显示
+            renderStats();
         }
     } catch (e) {
         console.warn('云端加载失败，使用本地数据', e);
@@ -106,36 +108,40 @@ async function saveSession(session) {
     localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
 
     try {
-    console.log('开始 insert 到 Supabase');
-    const { data, error } = await supabase.from('sessions').insert({
-        mode: session.mode,
-        duration: session.duration,
-        start_time: session.start,
-        end_time: session.end,
-        note: session.note || ''
-    });
+        console.log('开始 insert 到 Supabase');
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .insert({
+                mode: session.mode,
+                duration: session.duration,
+                start_time: session.start,
+                end_time: session.end,
+                note: session.note || ''
+            })
+            .select();  // 添加 .select() 返回插入的数据
 
-    if (error) {
-        console.error('Supabase 错误:', error);
-        throw error;
-    }
-
-    console.log('上传成功:', data);
-
-    if (data && data[0] && data[0].id) {
-        const localSession = state.sessions.find(s => 
-            s.mode === session.mode &&
-            s.start === session.start &&
-            s.end === session.end
-        );
-        if (localSession) {
-            localSession.id = data[0].id;
-            localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
+        if (error) {
+            console.error('Supabase 错误:', error);
+            throw error;
         }
+
+        console.log('上传成功:', data);
+
+        // 用云端返回的真实 id 替换本地临时 id
+        if (data && data[0] && data[0].id) {
+            const localSession = state.sessions.find(s => 
+                s.mode === session.mode &&
+                s.start === session.start &&
+                s.end === session.end
+            );
+            if (localSession) {
+                localSession.id = data[0].id;
+                localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
+            }
+        }
+    } catch (e) {
+        console.error('云端保存失败，数据保留本地:', e);
     }
-} catch (e) {
-    console.error('云端保存失败，数据保留本地:', e);
-}
 
     renderStats();
 }
@@ -148,7 +154,7 @@ async function updateSessionNote(id, text) {
     }
 
     try {
-        await supabase.from('sessions').update({ note: text }).eq('id', id);
+        await supabaseClient.from('sessions').update({ note: text }).eq('id', id);
     } catch (e) {
         console.warn('笔记同步失败', e);
     }
@@ -222,7 +228,7 @@ function completeTimer() {
     const startTime = new Date(endTime - MODES[state.currentMode].mins * 60000);
 
     saveSession({
-        id: Date.now(),  // 临时 id
+        id: Date.now(),  // 临时 id，会被云端返回的真实 id 替换
         mode: state.currentMode,
         duration: MODES[state.currentMode].mins,
         start: startTime.toISOString(),
