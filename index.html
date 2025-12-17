@@ -9,7 +9,6 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
 
@@ -123,7 +122,17 @@
         </section>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 使用 unpkg CDN 作为备用 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script>
+        // 验证 Supabase 是否加载成功
+        if (typeof supabase === 'undefined') {
+            console.error('❌ Supabase CDN 加载失败！');
+            alert('网络连接问题：Supabase 库加载失败，云端同步功能暂时不可用。');
+        } else {
+            console.log('✅ Supabase CDN 加载成功');
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
