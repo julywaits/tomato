@@ -4,82 +4,69 @@
 const SUPABASE_URL = 'https://rjpebjpgfuabljxskemm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo';
 
-// 简易 Supabase 客户端（使用原生 fetch）
+// 简易 Supabase 客户端
 const supabaseClient = {
     from: (table) => ({
-        select: (columns = '*') => ({
-            order: (column, options = {}) => ({
-                then: async (resolve) => {
-                    try {
-                        const response = await fetch(
-                            `${SUPABASE_URL}/rest/v1/${table}?select=${columns}&order=${column}.${options.ascending ? 'asc' : 'desc'}`,
-                            {
-                                headers: {
-                                    'apikey': SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                                }
+        select: (columns = '*') => {
+            const obj = {
+                order: (column, options = {}) => {
+                    return fetch(
+                        `${SUPABASE_URL}/rest/v1/${table}?select=${columns}&order=${column}.${options.ascending ? 'asc' : 'desc'}`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                             }
-                        );
-                        const data = await response.json();
-                        resolve({ data, error: null });
-                    } catch (error) {
-                        resolve({ data: null, error });
-                    }
-                }
-            })
-        }),
-        insert: (values) => ({
-            select: () => ({
-                then: async (resolve) => {
-                    try {
-                        const response = await fetch(
-                            `${SUPABASE_URL}/rest/v1/${table}`,
-                            {
-                                method: 'POST',
-                                headers: {
-                                    'apikey': SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                    'Content-Type': 'application/json',
-                                    'Prefer': 'return=representation'
-                                },
-                                body: JSON.stringify(values)
-                            }
-                        );
-                        const data = await response.json();
-                        if (!response.ok) {
-                            resolve({ data: null, error: data });
-                        } else {
-                            resolve({ data, error: null });
                         }
-                    } catch (error) {
-                        resolve({ data: null, error });
-                    }
-                }
-            })
-        }),
-        update: (values) => ({
-            eq: (column, value) => ({
-                then: async (resolve) => {
-                    try {
-                        const response = await fetch(
-                            `${SUPABASE_URL}/rest/v1/${table}?${column}=eq.${value}`,
-                            {
-                                method: 'PATCH',
-                                headers: {
-                                    'apikey': SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(values)
-                            }
-                        );
+                    ).then(async (response) => {
                         const data = await response.json();
-                        resolve({ data, error: null });
-                    } catch (error) {
-                        resolve({ data: null, error });
-                    }
+                        return { data, error: response.ok ? null : data };
+                    }).catch(error => ({ data: null, error }));
                 }
-            })
+            };
+            return obj;
+        },
+        insert: (values) => {
+            const obj = {
+                select: () => {
+                    return fetch(
+                        `${SUPABASE_URL}/rest/v1/${table}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify(values)
+                        }
+                    ).then(async (response) => {
+                        const data = await response.json();
+                        return { data: response.ok ? data : null, error: response.ok ? null : data };
+                    }).catch(error => ({ data: null, error }));
+                }
+            };
+            return obj;
+        },
+        update: (values) => ({
+            eq: (column, value) => {
+                return fetch(
+                    `${SUPABASE_URL}/rest/v1/${table}?${column}=eq.${value}`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(values)
+                    }
+                ).then(async (response) => {
+                    const data = await response.json();
+                    return { data, error: response.ok ? null : data };
+                }).catch(error => ({ data: null, error }));
+            }
         })
     })
 };
@@ -145,9 +132,10 @@ async function init() {
         if (next) app.selectMode(next);
     });
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
+    // 暂时禁用 Service Worker 避免缓存问题
+    // if ('serviceWorker' in navigator) {
+    //     navigator.serviceWorker.register('sw.js');
+    // }
 }
 
 function loadLocalData() {
@@ -250,7 +238,9 @@ const app = {
         updateTimerDisplay();
         els.circle.style.strokeDashoffset = 0;
         els.btnToggle.textContent = '开始';
+        els.btnToggle.classList.remove('hidden');
         els.suggestionArea.classList.add('hidden');
+        els.mainView.classList.add('hidden');
         els.timerView.classList.remove('hidden');
     }
 };
@@ -289,6 +279,7 @@ function resetTimer() {
 function exitTimer() {
     pauseTimer();
     els.timerView.classList.add('hidden');
+    els.mainView.classList.remove('hidden');
 }
 
 function completeTimer() {
@@ -359,44 +350,56 @@ function renderStats() {
         }
     });
 
-    els.statsStack.innerHTML = '';
-    const scale = Math.max(TARGET_MINUTES, todayMins);
-    Object.keys(breakdown).forEach(k => {
-        if (breakdown[k] > 0) {
-            const pct = (breakdown[k] / scale) * 100;
-            const bar = document.createElement('div');
-            bar.className = `progress-segment bg-${k}`;
-            bar.style.width = `${pct}%`;
-            if (todayMins > TARGET_MINUTES) bar.classList.add('over-limit');
-            els.statsStack.appendChild(bar);
-        }
-    });
+    // 渲染进度条
+    if (els.statsStack) {
+        els.statsStack.innerHTML = '';
+        const scale = Math.max(TARGET_MINUTES, todayMins);
+        Object.keys(breakdown).forEach(k => {
+            if (breakdown[k] > 0) {
+                const pct = (breakdown[k] / scale) * 100;
+                const bar = document.createElement('div');
+                bar.className = `progress-segment bg-${k}`;
+                bar.style.width = `${pct}%`;
+                if (todayMins > TARGET_MINUTES) bar.classList.add('over-limit');
+                els.statsStack.appendChild(bar);
+            }
+        });
+    }
 
-    const pct = ((todayMins / TARGET_MINUTES) * 100).toFixed(1);
-    els.totalTracked.textContent = `${todayMins}m / 840m`;
-    els.statsSummary.textContent = `今日已追踪 ${todayMins} 分钟 (占 14 小时的 ${pct}%)`;
+    // 更新统计文字
+    if (els.totalTracked) {
+        els.totalTracked.textContent = `${todayMins}m / 840m`;
+    }
+    
+    if (els.statsSummary) {
+        const pct = ((todayMins / TARGET_MINUTES) * 100).toFixed(1);
+        els.statsSummary.textContent = `今日已追踪 ${todayMins} 分钟 (占 14 小时的 ${pct}%)`;
+    }
 
-    els.sessionTimeline.innerHTML = '';
-    state.sessions.forEach(s => {
-        const card = document.createElement('div');
-        card.className = `session-card border-${s.mode}`;
+    // 渲染时间线
+    if (els.sessionTimeline) {
+        els.sessionTimeline.innerHTML = '';
+        state.sessions.forEach(s => {
+            const card = document.createElement('div');
+            card.className = `session-card border-${s.mode}`;
 
-        const date = new Date(s.start).toLocaleDateString('zh-CN');
-        const startT = new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const endT = new Date(s.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = new Date(s.start).toLocaleDateString('zh-CN');
+            const startT = new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const endT = new Date(s.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        let html = `
-            <div class="session-header">
-                <strong>${MODES[s.mode].label} • ${date}</strong>
-                <span>${startT} - ${endT}</span>
-            </div>
-        `;
-        if (s.duration >= 20) {
-            html += `<textarea class="session-note" placeholder="这个时段做了什么..." onblur="updateSessionNote(${s.id}, this.value)">${s.note || ''}</textarea>`;
-        }
-        card.innerHTML = html;
-        els.sessionTimeline.appendChild(card);
-    });
+            let html = `
+                <div class="session-header">
+                    <strong>${MODES[s.mode].label} • ${date}</strong>
+                    <span>${startT} - ${endT}</span>
+                </div>
+            `;
+            if (s.duration >= 20) {
+                html += `<textarea class="session-note" placeholder="这个时段做了什么..." onblur="updateSessionNote(${s.id}, this.value)">${s.note || ''}</textarea>`;
+            }
+            card.innerHTML = html;
+            els.sessionTimeline.appendChild(card);
+        });
+    }
 }
 
 window.app = app;
