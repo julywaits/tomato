@@ -100,26 +100,42 @@ async function syncFromSupabase() {
 }
 
 async function saveSession(session) {
+    console.log('准备上传到云端:', session);
+    
     state.sessions.unshift(session);
     localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
 
     try {
-        const { data, error } = await supabase.from('sessions').insert({
-            mode: session.mode,
-            duration: session.duration,
-            start_time: session.start,
-            end_time: session.end,
-            note: session.note
-        });
-        if (error) throw error;
-        // 插入成功后，用云端返回的 id 替换本地临时 id（可选优化）
-        if (data && data[0]) {
-            session.id = data[0].id;
+    console.log('开始 insert 到 Supabase');
+    const { data, error } = await supabase.from('sessions').insert({
+        mode: session.mode,
+        duration: session.duration,
+        start_time: session.start,
+        end_time: session.end,
+        note: session.note || ''
+    });
+
+    if (error) {
+        console.error('Supabase 错误:', error);
+        throw error;
+    }
+
+    console.log('上传成功:', data);
+
+    if (data && data[0] && data[0].id) {
+        const localSession = state.sessions.find(s => 
+            s.mode === session.mode &&
+            s.start === session.start &&
+            s.end === session.end
+        );
+        if (localSession) {
+            localSession.id = data[0].id;
             localStorage.setItem('pomo_sessions', JSON.stringify(state.sessions));
         }
-    } catch (e) {
-        console.warn('云端保存失败，数据保留本地', e);
     }
+} catch (e) {
+    console.error('云端保存失败，数据保留本地:', e);
+}
 
     renderStats();
 }
