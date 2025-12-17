@@ -124,13 +124,49 @@ async function init() {
     await syncFromSupabase();
     renderStats();
 
-    els.btnToggle.addEventListener('click', toggleTimer);
-    els.btnReset.addEventListener('click', resetTimer);
-    els.btnHome.addEventListener('click', exitTimer);
-    els.btnNext.addEventListener('click', () => {
-        const next = els.btnNext.dataset.nextMode;
-        if (next) app.selectMode(next);
-    });
+    // 绑定所有事件监听器
+    if (els.btnToggle) {
+        els.btnToggle.addEventListener('click', toggleTimer);
+        console.log('✅ 开始按钮已绑定');
+    }
+    
+    if (els.btnReset) {
+        els.btnReset.addEventListener('click', resetTimer);
+        console.log('✅ 重置按钮已绑定');
+    }
+    
+    if (els.btnHome) {
+        els.btnHome.addEventListener('click', exitTimer);
+        console.log('✅ 返回按钮已绑定');
+    }
+    
+    if (els.btnNext) {
+        els.btnNext.addEventListener('click', () => {
+            const next = els.btnNext.dataset.nextMode;
+            if (next) app.selectMode(next);
+        });
+        console.log('✅ 下一个模式按钮已绑定');
+    }
+
+    // 主题切换功能
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☾' : '☼';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            console.log('主题已切换:', isDark ? '暗色' : '亮色');
+        });
+        
+        // 加载保存的主题
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☾';
+        }
+        console.log('✅ 主题切换已绑定');
+    }
 
     // 暂时禁用 Service Worker 避免缓存问题
     // if ('serviceWorker' in navigator) {
