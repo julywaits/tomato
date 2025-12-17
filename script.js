@@ -1,13 +1,21 @@
 'use strict';
 
-// 从 CDN 加载的全局 supabase 对象中解构 createClient
-const { createClient } = supabase;
-
 // 创建 Supabase 客户端实例
-const supabaseClient = createClient(
-  'https://rjpebjpgfuabljxskemm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo'
-);
+// 使用 window.supabase 确保从全局作用域获取
+let supabaseClient;
+try {
+  if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(
+      'https://rjpebjpgfuabljxskemm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo'
+    );
+    console.log('✅ Supabase 客户端初始化成功');
+  } else {
+    console.error('❌ Supabase 库未加载，请检查 CDN');
+  }
+} catch (e) {
+  console.error('❌ Supabase 初始化失败:', e);
+}
 
 const MODES = {
     deep: { id: 'deep', label: '深度工作', mins: 25, color: 'var(--color-deep)', class: 'bg-deep' },
