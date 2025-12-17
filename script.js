@@ -1,29 +1,91 @@
 'use strict';
 
-// 等待 Supabase 库加载完成
-let supabaseClient;
+// 不使用 Supabase JS 库，直接用 fetch 调用 REST API
+const SUPABASE_URL = 'https://rjpebjpgfuabljxskemm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo';
 
-function initSupabase() {
-  try {
-    const { createClient } = window.supabase;
-    supabaseClient = createClient(
-      'https://rjpebjpgfuabljxskemm.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGVianBnZnVhYmxqeHNrZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDA1NTksImV4cCI6MjA4MTUxNjU1OX0.UuF6Dxo2JgMvVOvSj1NwS_ZKTho_-EDH9B5T_Px9cXo'
-    );
-    console.log('✅ Supabase 客户端初始化成功', supabaseClient);
-    window.supabaseClient = supabaseClient; // 暴露到全局供调试
-  } catch (e) {
-    console.error('❌ Supabase 初始化失败:', e);
-  }
-}
+// 简易 Supabase 客户端（使用原生 fetch）
+const supabaseClient = {
+    from: (table) => ({
+        select: (columns = '*') => ({
+            order: (column, options = {}) => ({
+                then: async (resolve) => {
+                    try {
+                        const response = await fetch(
+                            `${SUPABASE_URL}/rest/v1/${table}?select=${columns}&order=${column}.${options.ascending ? 'asc' : 'desc'}`,
+                            {
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                                }
+                            }
+                        );
+                        const data = await response.json();
+                        resolve({ data, error: null });
+                    } catch (error) {
+                        resolve({ data: null, error });
+                    }
+                }
+            })
+        }),
+        insert: (values) => ({
+            select: () => ({
+                then: async (resolve) => {
+                    try {
+                        const response = await fetch(
+                            `${SUPABASE_URL}/rest/v1/${table}`,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                    'Content-Type': 'application/json',
+                                    'Prefer': 'return=representation'
+                                },
+                                body: JSON.stringify(values)
+                            }
+                        );
+                        const data = await response.json();
+                        if (!response.ok) {
+                            resolve({ data: null, error: data });
+                        } else {
+                            resolve({ data, error: null });
+                        }
+                    } catch (error) {
+                        resolve({ data: null, error });
+                    }
+                }
+            })
+        }),
+        update: (values) => ({
+            eq: (column, value) => ({
+                then: async (resolve) => {
+                    try {
+                        const response = await fetch(
+                            `${SUPABASE_URL}/rest/v1/${table}?${column}=eq.${value}`,
+                            {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(values)
+                            }
+                        );
+                        const data = await response.json();
+                        resolve({ data, error: null });
+                    } catch (error) {
+                        resolve({ data: null, error });
+                    }
+                }
+            })
+        })
+    })
+};
 
-// 立即尝试初始化
-if (window.supabase) {
-  initSupabase();
-} else {
-  // 如果 CDN 还没加载完，等待 DOM 加载后再试
-  window.addEventListener('DOMContentLoaded', initSupabase);
-}
+console.log('✅ 自制 Supabase 客户端已就绪');
+window.supabaseClient = supabaseClient;
 
 const MODES = {
     deep: { id: 'deep', label: '深度工作', mins: 25, color: 'var(--color-deep)', class: 'bg-deep' },
@@ -134,7 +196,7 @@ async function saveSession(session) {
                 end_time: session.end,
                 note: session.note || ''
             })
-            .select();  // 添加 .select() 返回插入的数据
+            .select();
 
         if (error) {
             console.error('Supabase 错误:', error);
@@ -143,7 +205,6 @@ async function saveSession(session) {
 
         console.log('上传成功:', data);
 
-        // 用云端返回的真实 id 替换本地临时 id
         if (data && data[0] && data[0].id) {
             const localSession = state.sessions.find(s => 
                 s.mode === session.mode &&
@@ -244,7 +305,7 @@ function completeTimer() {
     const startTime = new Date(endTime - MODES[state.currentMode].mins * 60000);
 
     saveSession({
-        id: Date.now(),  // 临时 id，会被云端返回的真实 id 替换
+        id: Date.now(),
         mode: state.currentMode,
         duration: MODES[state.currentMode].mins,
         start: startTime.toISOString(),
