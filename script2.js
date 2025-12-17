@@ -152,17 +152,19 @@ async function init() {
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            themeToggle.textContent = isDark ? '☾' : '☼';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            console.log('主题已切换:', isDark ? '暗色' : '亮色');
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            themeToggle.textContent = isLight ? '☼' : '☾';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            console.log('主题已切换:', isLight ? '亮色' : '暗色');
         });
         
         // 加载保存的主题
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeToggle.textContent = '☼';
+        } else {
             themeToggle.textContent = '☾';
         }
         console.log('✅ 主题切换已绑定');
