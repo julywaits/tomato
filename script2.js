@@ -104,11 +104,11 @@ const els = {
     suggestionArea: document.getElementById('suggestion-area'),
     btnNext: document.getElementById('btn-next-mode'),
     btnHome: document.getElementById('btn-back-home'),
-    statsStack: document.getElementById('daily-progress-stack'),
-    statsSummary: document.getElementById('progress-summary'),
-    totalTracked: document.getElementById('total-tracked'),
+    summaryGrid: document.getElementById('stats-summary-grid'),
+    progressList: document.getElementById('daily-progress-list'),
+    totalTrackedText: document.getElementById('total-tracked-text'),
     sessionTimeline: document.getElementById('session-timeline'),
-    statsDate: document.getElementById('stats-date')
+    emptyState: document.getElementById('empty-state')
 };
 
 async function init() {
@@ -388,55 +388,83 @@ function renderStats() {
         }
     });
 
-    // 渲染进度条
-    if (els.statsStack) {
-        els.statsStack.innerHTML = '';
-        const scale = Math.max(TARGET_MINUTES, todayMins);
-        Object.keys(breakdown).forEach(k => {
-            if (breakdown[k] > 0) {
-                const pct = (breakdown[k] / scale) * 100;
-                const bar = document.createElement('div');
-                bar.className = `progress-segment bg-${k}`;
-                bar.style.width = `${pct}%`;
-                if (todayMins > TARGET_MINUTES) bar.classList.add('over-limit');
-                els.statsStack.appendChild(bar);
+    // 渲染今日统计（4列汇总）
+    if (els.summaryGrid) {
+        els.summaryGrid.innerHTML = '';
+        Object.keys(breakdown).forEach(mode => {
+            const item = document.createElement('div');
+            item.className = 'summary-item';
+            const modeConfig = MODES[mode];
+            item.innerHTML = `
+                <div class="summary-icon">${modeConfig.label.charAt(0)}</div>
+                <div class="summary-count text-${mode}">${breakdown[mode]}</div>
+                <div class="summary-label">${modeConfig.label}</div>
+            `;
+            els.summaryGrid.appendChild(item);
+        });
+    }
+
+    // 渲染进度条列表
+    if (els.progressList) {
+        els.progressList.innerHTML = '';
+        Object.keys(breakdown).forEach(mode => {
+            if (breakdown[mode] > 0) {
+                const row = document.createElement('div');
+                row.className = 'progress-row';
+                const percentage = Math.min(100, (breakdown[mode] / TARGET_MINUTES) * 100).toFixed(1);
+                row.innerHTML = `
+                    <div class="row-header">
+                        <span class="row-label">${MODES[mode].label}</span>
+                        <span class="row-stats">${breakdown[mode]}m · ${percentage}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill bg-${mode}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                els.progressList.appendChild(row);
             }
         });
     }
 
-    // 更新统计文字
-    if (els.totalTracked) {
-        els.totalTracked.textContent = `${todayMins}m / 840m`;
-    }
-    
-    if (els.statsSummary) {
-        const pct = ((todayMins / TARGET_MINUTES) * 100).toFixed(1);
-        els.statsSummary.textContent = `今日已追踪 ${todayMins} 分钟 (占 14 小时的 ${pct}%)`;
+    // 更新总时间文字
+    if (els.totalTrackedText) {
+        els.totalTrackedText.textContent = `${todayMins} / 840 分钟`;
     }
 
     // 渲染时间线
-    if (els.sessionTimeline) {
-        els.sessionTimeline.innerHTML = '';
-        state.sessions.forEach(s => {
-            const card = document.createElement('div');
-            card.className = `session-card border-${s.mode}`;
+    if (els.sessionTimeline && els.emptyState) {
+        const todaySessions = state.sessions.filter(s => 
+            new Date(s.start).toLocaleDateString() === today
+        );
 
-            const date = new Date(s.start).toLocaleDateString('zh-CN');
-            const startT = new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const endT = new Date(s.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (todaySessions.length > 0) {
+            els.emptyState.classList.add('hidden');
+            els.sessionTimeline.classList.remove('hidden');
+            els.sessionTimeline.innerHTML = '';
+            
+            todaySessions.forEach(s => {
+                const card = document.createElement('div');
+                card.className = `session-card border-${s.mode}`;
 
-            let html = `
-                <div class="session-header">
-                    <strong>${MODES[s.mode].label} • ${date}</strong>
-                    <span>${startT} - ${endT}</span>
-                </div>
-            `;
-            if (s.duration >= 20) {
-                html += `<textarea class="session-note" placeholder="这个时段做了什么..." onblur="updateSessionNote(${s.id}, this.value)">${s.note || ''}</textarea>`;
-            }
-            card.innerHTML = html;
-            els.sessionTimeline.appendChild(card);
-        });
+                const startT = new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const endT = new Date(s.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                let html = `
+                    <div class="session-top">
+                        <strong>${MODES[s.mode].label}</strong>
+                        <span class="session-time">${startT} - ${endT}</span>
+                    </div>
+                `;
+                if (s.duration >= 20) {
+                    html += `<textarea class="session-note" placeholder="这个时段做了什么..." onblur="updateSessionNote(${s.id}, this.value)">${s.note || ''}</textarea>`;
+                }
+                card.innerHTML = html;
+                els.sessionTimeline.appendChild(card);
+            });
+        } else {
+            els.emptyState.classList.remove('hidden');
+            els.sessionTimeline.classList.add('hidden');
+        }
     }
 }
 
