@@ -170,7 +170,18 @@ async function init() {
         console.log('✅ 主题切换已绑定');
     }
 
+    // 主动卸载旧的 Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => {
+                registration.unregister();
+                console.log('✅ 已卸载旧的 Service Worker');
+            });
+        });
+    }
+
     // 暂时禁用 Service Worker 避免缓存问题
+    // 等一切稳定后再启用
     // if ('serviceWorker' in navigator) {
     //     navigator.serviceWorker.register('sw.js');
     // }
@@ -318,6 +329,11 @@ function exitTimer() {
     pauseTimer();
     els.timerView.classList.add('hidden');
     els.mainView.classList.remove('hidden');
+    
+    // 恢复按钮显示状态
+    els.btnToggle.classList.remove('hidden');
+    els.btnReset.classList.remove('hidden');
+    els.suggestionArea.classList.add('hidden');
 }
 
 function completeTimer() {
@@ -342,7 +358,11 @@ function completeTimer() {
         note: ''
     });
 
+    // 隐藏开始和重置按钮
     els.btnToggle.classList.add('hidden');
+    els.btnReset.classList.add('hidden');
+    
+    // 显示建议区域
     els.suggestionArea.classList.remove('hidden');
     suggestNextMode();
     renderStats();
