@@ -119,9 +119,53 @@
                     <!-- Injected items -->
                 </div>
             </div>
+
+            <!-- 新增：趋势统计看板 -->
+            <div class="stats-group">
+                <div class="section-title">趋势统计</div>
+                
+                <!-- 时间范围切换 -->
+                <div class="trend-tabs">
+                    <button class="trend-tab active" data-range="week">本周</button>
+                    <button class="trend-tab" data-range="month">本月</button>
+                    <button class="trend-tab" data-range="year">今年</button>
+                </div>
+
+                <!-- 趋势卡片 -->
+                <div class="trend-card">
+                    <div class="trend-left">
+                        <svg class="pie-chart" viewBox="0 0 200 200" width="160" height="160">
+                            <circle class="pie-bg" cx="100" cy="100" r="80" fill="none" stroke="var(--border-color)" stroke-width="40"/>
+                            <!-- 饼图段将由 JS 动态生成 -->
+                            <g id="pie-segments"></g>
+                        </svg>
+                        <div class="pie-center-label">
+                            <div id="trend-total">0</div>
+                            <div class="pie-unit">分钟</div>
+                        </div>
+                    </div>
+                    
+                    <div class="trend-right">
+                        <div id="trend-breakdown">
+                            <!-- 统计数据将由 JS 注入 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 
-    <script src="script2.js"></script>
+    <!-- 使用 unpkg CDN 作为备用 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script>
+        // 验证 Supabase 是否加载成功
+        if (typeof supabase === 'undefined') {
+            console.error('❌ Supabase CDN 加载失败！');
+            alert('网络连接问题：Supabase 库加载失败，云端同步功能暂时不可用。');
+        } else {
+            console.log('✅ Supabase CDN 加载成功');
+        }
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
