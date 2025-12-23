@@ -123,6 +123,10 @@ async function init() {
     loadLocalData();
     await syncFromSupabase();
     renderStats();
+    
+    // 初始化趋势统计
+    updateTrendStats();
+    initTrendTabs();
 
     // 绑定所有事件监听器
     if (els.btnToggle) {
@@ -258,6 +262,7 @@ async function saveSession(session) {
     }
 
     renderStats();
+    updateTrendStats(); // 更新趋势统计
 }
 
 async function updateSessionNote(id, text) {
@@ -490,5 +495,150 @@ function renderStats() {
 
 window.app = app;
 window.updateSessionNote = updateSessionNote;
+
+// ===== 新增：趋势统计功能 =====
+
+let currentTrendRange = 'week'; // 默认显示本周
+
+// 计算指定时间范围内的统计数据
+function getTrendData(range) {
+    const now = new Date();
+    const breakdown = { deep: 0, break: 0, chore: 0, fitness: 0 };
+    
+    let startDate;
+    if (range === 'week') {
+        // 本周一
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+        startDate = new Date(now.setDate(diff));
+        startDate.setHours(0, 0, 0, 0);
+    } else if (range === 'month') {
+        // 本月第一天
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (range === 'year') {
+        // 今年第一天
+        startDate = new Date(now.getFullYear(), 0, 1);
+    }
+    
+    state.sessions.forEach(s => {
+        const sessionDate = new Date(s.start);
+        if (sessionDate >= startDate) {
+            breakdown[s.mode] += s.duration;
+        }
+    });
+    
+    const total = breakdown.deep + breakdown.break + breakdown.chore + breakdown.fitness;
+    return { breakdown, total };
+}
+
+// 渲染饼图
+function renderPieChart(breakdown, total) {
+    const pieSegments = document.getElementById('pie-segments');
+    if (!pieSegments) return;
+    
+    pieSegments.innerHTML = '';
+    
+    if (total === 0) {
+        document.getElementById('trend-total').textContent = '0';
+        return;
+    }
+    
+    document.getElementById('trend-total').textContent = total;
+    
+    const radius = 80;
+    const circumference = 2 * Math.PI * radius;
+    let currentAngle = 0;
+    
+    const modes = ['deep', 'break', 'chore', 'fitness'];
+    const colors = {
+        deep: 'var(--color-deep)',
+        break: 'var(--color-break)',
+        chore: 'var(--color-chore)',
+        fitness: 'var(--color-fitness)'
+    };
+    
+    modes.forEach(mode => {
+        if (breakdown[mode] > 0) {
+            const percent = breakdown[mode] / total;
+            const dashLength = circumference * percent;
+            const dashOffset = -currentAngle;
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', '100');
+            circle.setAttribute('cy', '100');
+            circle.setAttribute('r', radius);
+            circle.setAttribute('fill', 'none');
+            circle.setAttribute('stroke', colors[mode].replace('var(--color-', '').replace(')', ''));
+            circle.setAttribute('stroke-width', '40');
+            circle.setAttribute('stroke-dasharray', `${dashLength} ${circumference}`);
+            circle.setAttribute('stroke-dashoffset', dashOffset);
+            circle.setAttribute('transform', 'rotate(-90 100 100)');
+            circle.style.stroke = colors[mode];
+            
+            pieSegments.appendChild(circle);
+            
+            currentAngle += dashLength;
+        }
+    });
+}
+
+// 渲染右侧统计数据
+function renderTrendBreakdown(breakdown, total) {
+    const container = document.getElementById('trend-breakdown');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const modes = ['deep', 'break', 'chore', 'fitness'];
+    const colors = {
+        deep: 'var(--color-deep)',
+        break: 'var(--color-break)',
+        chore: 'var(--color-chore)',
+        fitness: 'var(--color-fitness)'
+    };
+    
+    modes.forEach(mode => {
+        const minutes = breakdown[mode];
+        const percent = total > 0 ? ((minutes / total) * 100).toFixed(1) : '0.0';
+        
+        const item = document.createElement('div');
+        item.className = 'trend-item';
+        item.innerHTML = `
+            <div class="trend-item-left">
+                <div class="trend-dot" style="background-color: ${colors[mode]}"></div>
+                <span class="trend-label">${MODES[mode].label}</span>
+            </div>
+            <div>
+                <span class="trend-value text-${mode}">${minutes}m</span>
+                <span class="trend-percent">${percent}%</span>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+// 更新趋势统计
+function updateTrendStats() {
+    const { breakdown, total } = getTrendData(currentTrendRange);
+    renderPieChart(breakdown, total);
+    renderTrendBreakdown(breakdown, total);
+}
+
+// 初始化趋势标签切换
+function initTrendTabs() {
+    const tabs = document.querySelectorAll('.trend-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 移除所有 active 类
+            tabs.forEach(t => t.classList.remove('active'));
+            // 添加当前 active 类
+            tab.classList.add('active');
+            // 更新范围
+            currentTrendRange = tab.dataset.range;
+            // 更新统计
+            updateTrendStats();
+        });
+    });
+}
 
 init();
